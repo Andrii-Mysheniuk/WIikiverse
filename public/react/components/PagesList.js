@@ -2,14 +2,14 @@ import React, { useState } from 'react'
 import { Page } from './Page'
 import apiURL from '../api'
 
-export const PagesList = ({ pages, onPageClick, fetchPages }) => {
+export const PagesList = ({ pages, onPageClick, fetchPages, onSelect = () => {} }) => {
   const [selectedPageSlug, setSelectedPageSlug] = useState(null)
-  const [isDescriptionActive, setIsDescriptionActive] = useState(false)
 
   const handlePageClick = (slug) => {
-    setSelectedPageSlug(slug)
-    onPageClick(slug)
-    setIsDescriptionActive(!isDescriptionActive)
+    setSelectedPageSlug(prevSlug => prevSlug === slug ? null : slug)
+    if (slug === selectedPageSlug) {
+      onPageClick(slug)
+    }
   }
 
   async function deletePage (slug) {
@@ -28,16 +28,14 @@ export const PagesList = ({ pages, onPageClick, fetchPages }) => {
   return (
     <div>
       {pages.map((page, idx) => (
-        <div key={idx} onClick={() => handlePageClick(page.slug)}>
-          {selectedPageSlug === page.slug && isDescriptionActive === false
-          ? (
+        <div key={idx}>
+          <h3 onClick={() => handlePageClick(page.slug)}>{page.title}</h3>
+          {selectedPageSlug === page.slug && (
             <>
               <Page page={page} />
               <button onClick={() => deletePage(page.slug)}>Delete</button>
+              <button onClick={(e) => { e.stopPropagation(); onSelect(page) }}>Edit</button>
             </>
-          )
-          : (
-            <h3>{page.title}</h3>
           )}
         </div>
       ))}

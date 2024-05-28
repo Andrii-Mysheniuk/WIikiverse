@@ -1,11 +1,20 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import apiURL from '../api'
 
-export const AddForm = ({ setIsAddArticle, fetchPages }) => {
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
-  const [authorName, setAuthorName] = useState('')
-  const [authorEmail, setAuthorEmail] = useState('')
+export const AddForm = ({ setIsAddArticle, fetchPages, post }) => {
+  const [title, setTitle] = useState(post?.title || '')
+  const [content, setContent] = useState(post?.content || '')
+  const [authorName, setAuthorName] = useState(post?.author?.name || '')
+  const [authorEmail, setAuthorEmail] = useState(post?.author?.email || '')
+
+  useEffect(() => {
+    if (post) {
+      setTitle(post.title)
+      setContent(post.content)
+      setAuthorName(post?.author?.name || '')
+      setAuthorEmail(post?.author?.email || '')
+    }
+  }, [post])
 
   async function onHandleClick (e) {
     e.preventDefault()
@@ -19,12 +28,20 @@ export const AddForm = ({ setIsAddArticle, fetchPages }) => {
     console.log('Sending article data:', articleData)
 
     try {
-      const response = await fetch(`${apiURL}/wiki`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(articleData)
+      const response = post
+      ? await fetch(`${apiURL}/wiki/${post.slug}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(articleData)
+      })
+      : await fetch(`${apiURL}/wiki`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(articleData)
       })
 
       const result = await response.json()
@@ -39,7 +56,7 @@ export const AddForm = ({ setIsAddArticle, fetchPages }) => {
 
   return <>
     <form className='addForm' onSubmit={onHandleClick}>
-      <h3>Add a Page</h3>
+      <h3>{post ? 'Edit Page' : 'Add Page'}</h3>
       <input
         value={title}
         onChange={e => setTitle(e.target.value)}
@@ -52,6 +69,7 @@ export const AddForm = ({ setIsAddArticle, fetchPages }) => {
         placeholder='Article Content'
         type='text'
       ></input>
+      {!post && <>
       <input
         value={authorName}
         onChange={e => setAuthorName(e.target.value)}
@@ -64,7 +82,10 @@ export const AddForm = ({ setIsAddArticle, fetchPages }) => {
         placeholder='Author Email'
         type='email'
       ></input>
-      <button type='submit'>Create Page</button>
+      </>
+      }
+
+      <button type='submit'>{post ? 'Update Page' : 'Create Page'}</button>
     </form>
   </>
 }
